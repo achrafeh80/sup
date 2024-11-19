@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy JAR app to Azure Web App - wasabi
+name: Build and deploy Node.js app to Azure Web App - wasabi
 
 on:
   push:
@@ -11,27 +11,31 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java version
-        uses: actions/setup-java@v1
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
-          java-version: '21'
+          node-version: '18'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the application
+        run: npm run build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          name: node-app
+          path: |
+            ./**/* # Adjust the path to include the files needed for deployment
 
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     environment:
       name: 'Production'
@@ -41,7 +45,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
-          name: java-app
+          name: node-app
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -50,4 +54,4 @@ jobs:
           app-name: 'wasabi'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_19CF28E0A3894AA6B5C53456B13B0575 }}
-          package: '*.jar'
+          package: '.'
